@@ -67,7 +67,6 @@ import { $fetch } from 'ofetch'
 import { computed, onMounted, onUnmounted, provide, ref, watch } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 
-import ModrinthAppLogo from '@/assets/modrinth_app.svg?component'
 import AccountsCard from '@/components/ui/AccountsCard.vue'
 import AppActionBar from '@/components/ui/AppActionBar.vue'
 import Breadcrumbs from '@/components/ui/Breadcrumbs.vue'
@@ -710,9 +709,7 @@ const hasPlus = computed(
 			hasActivePride26Midas(authenticatedModrinthUser.value?.campaigns?.pride_26)),
 )
 
-const showAd = computed(
-	() => sidebarVisible.value && !hasPlus.value && credentials.value !== undefined,
-)
+const showAd = computed(() => false)
 
 async function fetchIntercomToken() {
 	const creds = await getCreds()
@@ -1511,7 +1508,21 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 		</div>
 		<div data-tauri-drag-region class="app-grid-statusbar bg-bg-raised h-[--top-bar-height] flex">
 			<div data-tauri-drag-region class="flex min-w-0 flex-1 overflow-hidden p-3">
-				<ModrinthAppLogo class="h-full w-auto shrink-0 text-contrast pointer-events-none" />
+				<span
+					class="h-full flex items-center shrink-0 text-contrast pointer-events-none font-extrabold text-base tracking-tight gap-1"
+					style="font-family: 'Inter', 'Segoe UI', sans-serif"
+				>
+					<span style="font-size: 1.15rem">🎄</span>
+					<span
+						style="
+							background: linear-gradient(135deg, #c41e3a 0%, #2d8b4e 100%);
+							-webkit-background-clip: text;
+							-webkit-text-fill-color: transparent;
+							background-clip: text;
+						"
+						>XmasLegacy</span
+					>
+				</span>
 				<div data-tauri-drag-region class="flex shrink-0 items-center gap-1 ml-3">
 					<button
 						class="cursor-pointer p-0 m-0 text-contrast border-none outline-none bg-button-bg rounded-full flex items-center justify-center w-6 h-6 hover:brightness-75 transition-all"

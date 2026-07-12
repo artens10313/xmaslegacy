@@ -5,12 +5,18 @@
 		data-tauri-drag-region-exclude
 	>
 		<ButtonStyled type="transparent" circular>
-			<button class="relative expanded-button" @click="() => getCurrentWindow().minimize()">
+			<button
+				class="relative expanded-button window-btn minimize-btn"
+				@click="() => getCurrentWindow().minimize()"
+			>
 				<MinimizeIcon />
 			</button>
 		</ButtonStyled>
 		<ButtonStyled type="transparent" circular>
-			<button class="relative expanded-button" @click="() => getCurrentWindow().toggleMaximize()">
+			<button
+				class="relative expanded-button window-btn maximize-btn"
+				@click="() => getCurrentWindow().toggleMaximize()"
+			>
 				<RestoreIcon v-if="isMaximized" />
 				<MaximizeIcon v-else />
 			</button>
@@ -22,7 +28,10 @@
 			hover-color-fill="background"
 			circular
 		>
-			<button class="relative expanded-button close-button" @click="handleClose">
+			<button
+				class="relative expanded-button close-button window-btn close-btn"
+				@click="handleClose"
+			>
 				<XIcon />
 			</button>
 		</ButtonStyled>
@@ -89,5 +98,25 @@ const handleClose = async () => {
 
 .expanded-button.close-button::before {
 	inset: -9px -9px -9px -6px;
+}
+
+.window-btn {
+	transition: all 0.2s ease;
+}
+
+.window-btn:hover {
+	filter: drop-shadow(0 0 4px rgba(196, 30, 58, 0.5));
+}
+
+.minimize-btn:hover {
+	color: #2d8b4e;
+}
+
+.maximize-btn:hover {
+	color: #2d8b4e;
+}
+
+.close-btn:hover {
+	filter: drop-shadow(0 0 6px rgba(232, 56, 79, 0.7));
 }
 </style>

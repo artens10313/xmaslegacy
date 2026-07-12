@@ -164,23 +164,29 @@ onUnmounted(() => unlisten())
 			</div>
 			<div class="flex items-center">
 				<ButtonStyled v-if="playing" color="red" circular @mousehover="checkProcess">
-					<button v-tooltip="'Stop'" @click="(e) => stop(e, 'InstanceCard')">
+					<button
+						v-tooltip="'Stop Game'"
+						class="christmas-stop-btn"
+						@click="(e) => stop(e, 'InstanceCard')"
+					>
 						<StopCircleIcon />
 					</button>
 				</ButtonStyled>
 				<ButtonStyled v-else-if="modLoading" color="standard" circular>
 					<button v-tooltip="'Instance is loading...'" disabled>
-						<SpinnerIcon class="animate-spin" />
+						<SpinnerIcon class="animate-spin text-brand" />
 					</button>
 				</ButtonStyled>
 				<ButtonStyled v-else :color="first ? 'brand' : 'standard'" circular>
 					<button
-						v-tooltip="'Play'"
+						v-tooltip="'Play Game'"
+						class="christmas-play-btn"
 						@click="(e) => play(e, 'InstanceCard')"
 						@mousehover="checkProcess"
 					>
 						<!-- Translate for optical centering -->
-						<PlayIcon class="translate-x-[1px]" />
+						<span class="mr-0.5 inline-block">🎮</span>
+						<PlayIcon class="translate-x-[1px] inline-block" />
 					</button>
 				</ButtonStyled>
 			</div>
@@ -212,9 +218,9 @@ onUnmounted(() => unlisten())
 				<div class="absolute inset-0 flex items-center justify-center">
 					<ButtonStyled v-if="playing" size="large" color="red" circular>
 						<button
-							v-tooltip="'Stop'"
+							v-tooltip="'Stop Game'"
 							:class="{ 'scale-100 opacity-100': playing }"
-							class="transition-all scale-75 origin-bottom opacity-0 card-shadow"
+							class="transition-all scale-75 origin-bottom opacity-0 card-shadow christmas-stop-btn"
 							@click="(e) => stop(e, 'InstanceCard')"
 							@mousehover="checkProcess"
 						>
@@ -224,13 +230,13 @@ onUnmounted(() => unlisten())
 					<SpinnerIcon
 						v-else-if="modLoading || installing"
 						v-tooltip="modLoading ? 'Instance is loading...' : 'Installing...'"
-						class="animate-spin w-8 h-8"
+						class="animate-spin w-8 h-8 text-brand"
 						tabindex="-1"
 					/>
 					<ButtonStyled v-else-if="!installed" size="large" color="brand" circular>
 						<button
 							v-tooltip="'Repair'"
-							class="transition-all scale-75 group-hover:scale-100 group-focus-within:scale-100 origin-bottom opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 card-shadow"
+							class="transition-all scale-75 group-hover:scale-100 group-focus-within:scale-100 origin-bottom opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 card-shadow christmas-action-btn"
 							@click="(e) => repair(e)"
 						>
 							<DownloadIcon />
@@ -238,11 +244,12 @@ onUnmounted(() => unlisten())
 					</ButtonStyled>
 					<ButtonStyled v-else size="large" color="brand" circular>
 						<button
-							v-tooltip="'Play'"
-							class="transition-all scale-75 group-hover:scale-100 group-focus-within:scale-100 origin-bottom opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 card-shadow"
+							v-tooltip="'Play Game'"
+							class="transition-all scale-75 group-hover:scale-100 group-focus-within:scale-100 origin-bottom opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 card-shadow christmas-play-btn"
 							@click="(e) => play(e, 'InstanceCard')"
 							@mousehover="checkProcess"
 						>
+							<span class="mr-0.5">🎮</span>
 							<PlayIcon class="translate-x-[2px]" />
 						</button>
 					</ButtonStyled>
@@ -262,3 +269,35 @@ onUnmounted(() => unlisten())
 		</div>
 	</div>
 </template>
+
+<style scoped>
+.christmas-play-btn {
+	transition: all 0.3s ease;
+	position: relative;
+}
+
+.christmas-play-btn:hover {
+	filter: drop-shadow(0 0 6px rgba(196, 30, 58, 0.6)) drop-shadow(0 0 12px rgba(45, 139, 78, 0.3));
+	transform: scale(1.05);
+}
+
+.christmas-stop-btn {
+	transition: all 0.3s ease;
+	position: relative;
+}
+
+.christmas-stop-btn:hover {
+	filter: drop-shadow(0 0 6px rgba(196, 30, 58, 0.7)) drop-shadow(0 0 12px rgba(232, 56, 79, 0.5));
+	transform: scale(1.08);
+}
+
+.christmas-action-btn {
+	transition: all 0.3s ease;
+	position: relative;
+}
+
+.christmas-action-btn:hover {
+	filter: drop-shadow(0 0 8px rgba(196, 30, 58, 0.5)) drop-shadow(0 0 12px rgba(45, 139, 78, 0.4));
+	transform: scale(1.1);
+}
+</style>
