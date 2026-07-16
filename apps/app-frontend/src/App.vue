@@ -9,21 +9,17 @@ import {
 	VerboseLoggingFeature,
 } from '@modrinth/api-client'
 import {
-	ArrowBigUpDashIcon,
 	ChangeSkinIcon,
-	CompassIcon,
 	ExternalIcon,
 	HomeIcon,
 	LeftArrowIcon,
 	LibraryIcon,
 	LogInIcon,
 	LogOutIcon,
-	NewspaperIcon,
 	NotepadTextIcon,
 	PlusIcon,
 	RefreshCwIcon,
 	RightArrowIcon,
-	ServerStackIcon,
 	SettingsIcon,
 	UserIcon,
 	WorldIcon,
@@ -40,7 +36,6 @@ import {
 	defineMessages,
 	I18nDebugPanel,
 	LoadingBar,
-	NewsArticleCard,
 	NotificationPanel,
 	OverflowMenu,
 	PopupNotificationPanel,
@@ -67,6 +62,7 @@ import { $fetch } from 'ofetch'
 import { computed, onMounted, onUnmounted, provide, ref, watch } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 
+import ModrinthAppLogo from '@/assets/modrinth_app.svg?component'
 import AccountsCard from '@/components/ui/AccountsCard.vue'
 import AppActionBar from '@/components/ui/AppActionBar.vue'
 import Breadcrumbs from '@/components/ui/Breadcrumbs.vue'
@@ -82,7 +78,6 @@ import ModpackAlreadyInstalledModal from '@/components/ui/modal/ModpackAlreadyIn
 import UpdateToPlayModal from '@/components/ui/modal/UpdateToPlayModal.vue'
 import NavButton from '@/components/ui/NavButton.vue'
 import PrideFundraiserBanner from '@/components/ui/PrideFundraiserBanner.vue'
-import PromotionWrapper from '@/components/ui/PromotionWrapper.vue'
 import QuickInstanceSwitcher from '@/components/ui/QuickInstanceSwitcher.vue'
 import SplashScreen from '@/components/ui/SplashScreen.vue'
 import WindowControls from '@/components/ui/WindowControls.vue'
@@ -247,7 +242,6 @@ const {
 	handleModpackDuplicateGoToInstance,
 } = setupProviders(notificationManager, popupNotificationManager)
 
-const news = ref([])
 const availableSurvey = ref(false)
 const displayedServerInviteNotifications = new Set()
 
@@ -417,22 +411,6 @@ async function setupApp() {
 			console.log(
 				`No critical announcement found at https://api.modrinth.com/appCriticalAnnouncement.json?version=${version}`,
 			)
-		})
-
-	fetch(`https://modrinth.com/news/feed/articles.json`)
-		.then((response) => response.json())
-		.then((res) => {
-			if (res && res.articles) {
-				news.value = res.articles
-					.map((article) => ({
-						...article,
-						path: article.link,
-					}))
-					.slice(0, 4)
-			}
-		})
-		.catch((error) => {
-			console.error('Failed to fetch news articles', error)
 		})
 
 	get_opening_command().then(handleCommand)
@@ -709,7 +687,9 @@ const hasPlus = computed(
 			hasActivePride26Midas(authenticatedModrinthUser.value?.campaigns?.pride_26)),
 )
 
-const showAd = computed(() => false)
+const showAd = computed(
+	() => sidebarVisible.value && !hasPlus.value && credentials.value !== undefined,
+)
 
 async function fetchIntercomToken() {
 	const creds = await getCreds()
@@ -852,12 +832,13 @@ async function handleCommand(e) {
 		if (e.path.endsWith('.mrpack')) {
 			const location = { type: 'fromFile', path: e.path }
 			const preview = await install_get_modpack_preview(location).catch(handleError)
-			if (preview?.unknownFile) {
+			if (preview?.unknownFile || preview?.externalFilesInModpack.length > 0) {
 				const splitPath = e.path.split(/[\\/]/)
 				const fileName = splitPath ? splitPath[splitPath.length - 1] : e.path
 				unknownPackWarningModal.value?.show(
 					() => install_create_modpack_instance(location).then(() => undefined),
 					fileName,
+					preview.externalFilesInModpack,
 				)
 			} else {
 				await install_create_modpack_instance(location).catch(handleError)
@@ -1421,14 +1402,6 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 			<NavButton v-if="themeStore.featureFlags.worlds_tab" v-tooltip.right="'Worlds'" to="/worlds">
 				<WorldIcon />
 			</NavButton>
-			<NavButton
-				v-tooltip.right="'Discover content'"
-				to="/browse/modpack"
-				:is-primary="() => route.path.startsWith('/browse') && !route.query.i"
-				:is-subpage="(route) => route.path.startsWith('/project') && !route.query.i"
-			>
-				<CompassIcon />
-			</NavButton>
 			<NavButton v-tooltip.right="'Skin selector'" to="/skins">
 				<ChangeSkinIcon />
 			</NavButton>
@@ -1444,14 +1417,6 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 				"
 			>
 				<LibraryIcon />
-			</NavButton>
-			<NavButton
-				v-tooltip.right="'Modrinth Hosting'"
-				to="/hosting/manage"
-				:is-primary="(r) => r.path === '/hosting/manage' || r.path === '/hosting/manage/'"
-				:is-subpage="(r) => r.path.startsWith('/hosting/manage/') && r.path !== '/hosting/manage/'"
-			>
-				<ServerStackIcon />
 			</NavButton>
 			<div class="h-px w-6 mx-auto my-2 bg-surface-5"></div>
 			<suspense>
@@ -1473,7 +1438,7 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 			</NavButton>
 			<OverflowMenu
 				v-if="credentials?.user"
-				v-tooltip.right="`Modrinth account`"
+				v-tooltip.right="`XmasLegacy account`"
 				class="w-12 h-12 text-primary rounded-full flex items-center justify-center text-2xl transition-all bg-transparent hover:bg-button-bg hover:text-contrast border-0 cursor-pointer"
 				:options="[
 					{
@@ -1502,27 +1467,13 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 				</template>
 				<template #sign-out> <LogOutIcon /> Sign out </template>
 			</OverflowMenu>
-			<NavButton v-else v-tooltip.right="'Sign in to a Modrinth account'" :to="() => signIn()">
+			<NavButton v-else v-tooltip.right="'Sign in to an account'" :to="() => signIn()">
 				<LogInIcon class="text-brand" />
 			</NavButton>
 		</div>
 		<div data-tauri-drag-region class="app-grid-statusbar bg-bg-raised h-[--top-bar-height] flex">
 			<div data-tauri-drag-region class="flex min-w-0 flex-1 overflow-hidden p-3">
-				<span
-					class="h-full flex items-center shrink-0 text-contrast pointer-events-none font-extrabold text-base tracking-tight gap-1"
-					style="font-family: 'Inter', 'Segoe UI', sans-serif"
-				>
-					<span style="font-size: 1.15rem">🎄</span>
-					<span
-						style="
-							background: linear-gradient(135deg, #c41e3a 0%, #2d8b4e 100%);
-							-webkit-background-clip: text;
-							-webkit-text-fill-color: transparent;
-							background-clip: text;
-						"
-						>XmasLegacy</span
-					>
-				</span>
+				<ModrinthAppLogo class="h-full w-auto shrink-0 text-contrast pointer-events-none" />
 				<div data-tauri-drag-region class="flex shrink-0 items-center gap-1 ml-3">
 					<button
 						class="cursor-pointer p-0 m-0 text-contrast border-none outline-none bg-button-bg rounded-full flex items-center justify-center w-6 h-6 hover:brightness-75 transition-all"
@@ -1670,33 +1621,8 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 						v-if="prideFundraiserEnabled"
 						class="p-4 border-0 border-b-[1px] border-[--brand-gradient-border] border-solid"
 					/>
-					<div v-if="news && news.length > 0" class="p-4 flex flex-col items-center">
-						<h3 class="text-base mb-4 text-primary font-medium m-0 text-left w-full">News</h3>
-						<div class="space-y-4 flex flex-col items-center w-full">
-							<NewsArticleCard
-								v-for="(item, index) in news"
-								:key="`news-${index}`"
-								:article="item"
-							/>
-							<ButtonStyled color="brand" size="large">
-								<a href="https://modrinth.com/news" target="_blank" class="my-4">
-									<NewspaperIcon /> View all news
-								</a>
-							</ButtonStyled>
-						</div>
-					</div>
 				</div>
 			</div>
-			<template v-if="showAd">
-				<a
-					href="https://modrinth.plus?app"
-					class="absolute bottom-[250px] w-full flex justify-center items-center gap-1 px-4 py-3 text-purple font-medium hover:underline z-10"
-					target="_blank"
-				>
-					<ArrowBigUpDashIcon class="text-2xl" /> Upgrade to Modrinth+
-				</a>
-				<PromotionWrapper />
-			</template>
 		</div>
 	</div>
 	<I18nDebugPanel />
@@ -1747,8 +1673,8 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 		@create-anyway="handleContentInstallModpackDuplicateCreateAnyway"
 		@go-to-instance="handleContentInstallModpackDuplicateGoToInstance"
 	/>
-	<InstallToPlayModal ref="installToPlayModal" />
-	<UpdateToPlayModal ref="updateToPlayModal" />
+	<InstallToPlayModal ref="installToPlayModal" :show-external-warnings="false" />
+	<UpdateToPlayModal ref="updateToPlayModal" :show-external-warnings="false" />
 </template>
 
 <style lang="scss" scoped>
